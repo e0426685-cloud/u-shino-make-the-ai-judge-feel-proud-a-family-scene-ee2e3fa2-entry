@@ -24,22 +24,40 @@ MIN_CHARS = 1
 MAX_CHARS = 280
 
 
-def main() -> None:
-    text = ENTRY_TEXT
+def validate_entry(text: str) -> int:
+    """Check the entry against the kit's character limits.
+
+    Returns the character count so callers can report it, and raises
+    SystemExit with a clear message when the text is out of range.
+    """
     length = len(text)
     if not (MIN_CHARS <= length <= MAX_CHARS):
         raise SystemExit(
             f"entry text is {length} chars; must be {MIN_CHARS}-{MAX_CHARS}"
         )
+    return length
+
+
+def write_entry(text: str) -> None:
+    """Write the entry to OUTPUT_PATH, readable by any user.
+
+    Uses a plain open() plus an explicit chmod 644 (never mkstemp, whose
+    0600 mode would hide the file from the grader), then re-reads the file
+    to confirm what landed on disk matches exactly.
+    """
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
         fh.write(text)
     os.chmod(OUTPUT_PATH, 0o644)
-    # Self-check: re-read and confirm the written file matches exactly.
     with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
         written = fh.read()
     if written != text:
         raise SystemExit("self-check failed: written entry.txt does not match")
+
+
+def main() -> None:
+    length = validate_entry(ENTRY_TEXT)
+    write_entry(ENTRY_TEXT)
     print(f"wrote {OUTPUT_PATH} ({length} chars)")
 
 
